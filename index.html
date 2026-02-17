@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gas POS System v4.2</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2a5298">
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #1e3c72, #2a5298);
+    margin: 0;
+    padding: 0;
+    color: white;
+    text-align: center;
+}
+
+.container {
+    max-width: 500px;
+    margin: 30px auto;
+    background: rgba(255,255,255,0.1);
+    padding: 20px;
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
+}
+
+h1 {
+    margin-bottom: 10px;
+}
+
+input, select {
+    width: 80%;
+    padding: 12px;
+    border-radius: 8px;
+    border: none;
+    margin: 10px 0;
+    font-size: 16px;
+}
+
+button {
+    padding: 10px 15px;
+    margin: 5px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.primary { background: #00c6ff; color: black; }
+.success { background: #00ff99; color: black; }
+.warning { background: orange; color: black; }
+.danger { background: red; color: white; }
+.secondary { background: white; color: black; }
+
+.stats {
+    margin-top: 20px;
+    text-align: left;
+}
+
+.history-box {
+    background: rgba(0,0,0,0.3);
+    padding: 10px;
+    border-radius: 10px;
+    margin-top: 10px;
+    text-align: left;
+}
+
+.sale-entry {
+    display: flex;
+    justify-content: space-between;
+    margin: 2px 0;
+}
+
+#historyPanel {
+    display: none;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h1>Gas POS. Systerm</h1>
+    <p>Built  by Ajibade Multibiz Ventures
+    <br><span style="color:red"><b>Contact:</b> 08119365338</span></p>
+    
+
+    <h3 id="todayDate"></h3>
+
+    <!-- Editable Prices -->
+    <input type="number" id="sellingPrice" placeholder="Selling Price per KG (₦)" oninput="updateSellingPrice()">
+    <input type="number" id="costPrice" placeholder="Cost Price per KG (₦)" oninput="updateCostPrice()">
+
+    <!-- Mode Switch -->
+    <select id="inputMode" onchange="switchInputMode()">
+        <option value="money">Amount (₦)</option>
+        <option value="kg">KG</option>
+    </select>
+
+    <!-- Single Input -->
+    <input type="number" id="singleInput" placeholder="Enter Amount (₦)" oninput="calculateValue()">
+    <p id="calculatedResult" style="font-weight:bold;"></p>
+
+    <div>
+        <button class="primary" onclick="sellGas()">Sell</button>
+        <button class="warning" onclick="undoLastSale()">Undo Last Sale</button>
+        <button class="success" onclick="startNewDay()">Start New Day</button>
+        <button class="secondary" onclick="viewHistory()">View History</button>
+        <button class="success" onclick="exportToExcel()">Export to Excel</button>
+    </div>
+
+    <div class="stats">
+        <h3>Today's Summary</h3>
+        <p>Total KG: <span id="totalKg">0</span></p>
+        <p>Total Amount: ₦<span id="totalAmount">0</span></p>
+        <p>Total Profit: ₦<span id="totalProfit">0</span></p>
+    </div>
+</div>
+
+<!-- History Panel -->
+<div id="historyPanel" class="container">
+    <button class="danger" onclick="closeHistory()">Close History</button>
+    <div id="historyContent"></div>
+</div>
+
+<script src="script.js"></script>
+
+<script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js')
+            .then(() => console.log('Service Worker Registered'))
+            .catch(err => console.log('Service Worker Registration Failed:', err));
+    }
+</script>
+
+
+</body>
+</html>
