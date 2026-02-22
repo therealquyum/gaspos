@@ -3,14 +3,18 @@ let costPricePerKg = 900;
 const STORAGE_KEY = "gasSalesData";
 
 window.onload = function() {
+    // Load saved prices
     const savedSelling = localStorage.getItem("sellingPrice");
     const savedCost = localStorage.getItem("costPrice");
-
     if (savedSelling) sellingPricePerKg = parseFloat(savedSelling);
     if (savedCost) costPricePerKg = parseFloat(savedCost);
 
     document.getElementById("sellingPrice").value = sellingPricePerKg;
     document.getElementById("costPrice").value = costPricePerKg;
+
+    // Load saved input mode
+    const savedMode = localStorage.getItem("inputMode");
+    if (savedMode) document.getElementById("inputMode").value = savedMode;
 
     getTodayRecord();
     updateDisplay();
@@ -18,8 +22,7 @@ window.onload = function() {
 };
 
 function getTodayDate() {
-    const today = new Date();
-    return today.toISOString().split("T")[0];
+    return new Date().toISOString().split("T")[0];
 }
 
 function loadData() {
@@ -51,35 +54,29 @@ function updateCostPrice() {
 function getTodayRecord() {
     const today = getTodayDate();
     let data = loadData();
-
     if (!data[today]) {
         data[today] = { totalKg:0, totalAmount:0, totalProfit:0, sales:[] };
         saveData(data);
     }
-
     return data[today];
 }
 
 function updateDisplay() {
     const today = getTodayDate();
-    const data = loadData();
-    const record = data[today];
-
+    const record = loadData()[today];
     document.getElementById("todayDate").innerText = "Date: " + today;
     document.getElementById("totalKg").innerText = record.totalKg.toFixed(2);
     document.getElementById("totalAmount").innerText = record.totalAmount.toFixed(2);
     document.getElementById("totalProfit").innerText = record.totalProfit.toFixed(2);
+    document.getElementById("totalTransactions").innerText = record.sales.length;
 }
 
 function switchInputMode() {
     const mode = document.getElementById("inputMode").value;
     const inputField = document.getElementById("singleInput");
-    const result = document.getElementById("calculatedResult");
-
-    if (mode === "money") inputField.placeholder = "Enter Amount (₦)";
-    else inputField.placeholder = "Enter KG";
-
-    result.innerText = "";
+    localStorage.setItem("inputMode", mode);
+    inputField.placeholder = mode === "money" ? "Enter Amount (₦)" : "Enter KG";
+    document.getElementById("calculatedResult").innerText = "";
 }
 
 function calculateValue() {
@@ -103,14 +100,12 @@ function sellGas() {
 
     const mode = document.getElementById("inputMode").value;
     const val = parseFloat(document.getElementById("singleInput").value);
-
     if (isNaN(val) || val <= 0) { alert("Enter valid Amount or KG"); return; }
 
-    let kg, amount;
-    if (mode === "money") { amount = val; kg = amount / sellingPricePerKg; }
-    else { kg = val; amount = kg * sellingPricePerKg; }
-
+    let kg = mode === "money" ? val / sellingPricePerKg : val;
+    let amount = kg * sellingPricePerKg;
     const profit = kg * (sellingPricePerKg - costPricePerKg);
+
     const today = getTodayDate();
     let data = loadData();
     let record = getTodayRecord();
@@ -118,8 +113,8 @@ function sellGas() {
     record.totalKg += kg;
     record.totalAmount += amount;
     record.totalProfit += profit;
-
     record.sales.push({ kg, amount, profit, time: new Date().toLocaleTimeString() });
+
     data[today] = record;
     saveData(data);
 
@@ -131,11 +126,9 @@ function sellGas() {
 // Undo Last Sale
 function undoLastSale() {
     if (!confirm("Confirm: Do you really want to undo the last sale?")) return;
-
     const today = getTodayDate();
     let data = loadData();
     let record = data[today];
-
     if (!record || record.sales.length === 0) { alert("No sale to undo"); return; }
 
     const lastSale = record.sales.pop();
@@ -150,27 +143,45 @@ function undoLastSale() {
 // Start New Day
 function startNewDay() {
     if (!confirm("Confirm: Start a new business day?")) return;
-
     const today = getTodayDate();
     let data = loadData();
-
     data[today] = { totalKg:0, totalAmount:0, totalProfit:0, sales:[] };
     saveData(data);
     updateDisplay();
 }
 
-// View History
+// View History with newest first + per-day totals + grand totals
 function viewHistory() {
     const historyPanel = document.getElementById("historyPanel");
     const historyContent = document.getElementById("historyContent");
     const data = loadData();
     historyContent.innerHTML = "";
 
-    for (let date in data) {
+    // 1️⃣ Grand totals across all days
+    let grandTotalKg = 0, grandTotalAmount = 0, grandTotalProfit = 0;
+    Object.values(data).forEach(record => {
+        grandTotalKg += record.totalKg;
+        grandTotalAmount += record.totalAmount;
+        grandTotalProfit += record.totalProfit;
+    });
+
+    historyContent.innerHTML = `
+        <div class="history-box" style="background:rgba(0,0,0,0.5);">
+            <strong>Grand Total Across All Days</strong>
+            <p>Total KG Sold: ${grandTotalKg.toFixed(2)}</p>
+            <p>Total Amount: ₦${grandTotalAmount.toFixed(2)}</p>
+            <p>Total Profit: ₦${grandTotalProfit.toFixed(2)}</p>
+        </div>
+    `;
+
+    // 2️⃣ Sort days newest first
+    const sortedDates = Object.keys(data).sort((a, b) => b.localeCompare(a));
+    sortedDates.forEach(date => {
         const record = data[date];
         const box = document.createElement("div");
         box.className = "history-box";
 
+        // Individual sales
         let salesHTML = "";
         for (let i = record.sales.length - 1; i >= 0; i--) {
             const sale = record.sales[i];
@@ -181,16 +192,18 @@ function viewHistory() {
             </div>`;
         }
 
+        // Totals per day
         box.innerHTML = `
             <strong>${date}</strong>
-            <p>Total KG: ${record.totalKg.toFixed(2)}</p>
-            <p>Total Amount: ₦${record.totalAmount.toFixed(2)}</p>
-            <p>Total Profit: ₦${record.totalProfit.toFixed(2)}</p>
+            <p><b>Total KG:</b> ${record.totalKg.toFixed(2)}</p>
+            <p><b>Total Amount:</b> ₦${record.totalAmount.toFixed(2)}</p>
+            <p><b>Total Profit:</b> ₦${record.totalProfit.toFixed(2)}</p>
+            <p><b>Total Transactions:</b> ${record.sales.length}</p>
             <hr>${salesHTML}
         `;
 
         historyContent.appendChild(box);
-    }
+    });
 
     historyPanel.style.display = "block";
 }
@@ -198,7 +211,6 @@ function viewHistory() {
 // Delete Single Sale
 function deleteSale(date, index) {
     if (!confirm("Confirm: Delete this sale?")) return;
-
     let data = loadData();
     const record = data[date];
     const sale = record.sales[index];
@@ -208,7 +220,6 @@ function deleteSale(date, index) {
     record.totalProfit -= sale.profit;
 
     record.sales.splice(index, 1);
-
     data[date] = record;
     saveData(data);
     viewHistory();
@@ -220,13 +231,11 @@ function closeHistory() {
     document.getElementById("historyPanel").style.display = "none";
 }
 
-// Export to Excel (simple CSV)
+// Export today's sales to CSV
 function exportToExcel() {
     if (!confirm("Export today's sales to Excel?")) return;
-
     const today = getTodayDate();
-    const data = loadData();
-    const record = data[today];
+    const record = loadData()[today];
     if (!record || record.sales.length === 0) { alert("No sales to export"); return; }
 
     let csv = "Time,KG,Amount,Profit\n";

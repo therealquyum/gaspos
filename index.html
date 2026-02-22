@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gas POS System v4.2</title>
+<title>Gas POS System v4.3</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#2a5298">
 <style>
@@ -25,9 +25,7 @@ body {
     backdrop-filter: blur(10px);
 }
 
-h1 {
-    margin-bottom: 10px;
-}
+h1 { margin-bottom: 10px; }
 
 input, select {
     width: 80%;
@@ -46,17 +44,23 @@ button {
     cursor: pointer;
     font-size: 14px;
 }
+    
+    
+    .button-sell {
+    width: 90%;      /* almost full width */
+    font-size:1.5rem; /* bigger text */
+    padding: 15px;   /* taller button */
+    margin: 10px 0;  /* more spacing */
+       font-weight:900;
+}
 
-.primary { background: #00c6ff; color: black; }
+.primary { background: #00c6ff; color: white; }
 .success { background: #00ff99; color: black; }
 .warning { background: orange; color: black; }
 .danger { background: red; color: white; }
 .secondary { background: white; color: black; }
 
-.stats {
-    margin-top: 20px;
-    text-align: left;
-}
+.stats { margin-top: 20px; text-align: left; }
 
 .history-box {
     background: rgba(0,0,0,0.3);
@@ -76,36 +80,41 @@ button {
     display: none;
     max-height: 80vh;
     overflow-y: auto;
+    padding-bottom: 20px;
 }
+
+label { display: block; margin-top: 10px; font-weight: bold; }
 </style>
 </head>
 
 <body>
 
 <div class="container">
-    <h1> Cooking Gas POS. Systerm</h1>
-    <p>Built  by Ajibade Multibiz Ventures.......
-    <br><span style="color:red"><b>Contact:</b> 08119365338</span></p>
-    
+    <h1>Cooking Gas POS System</h1>
+    <p>Built by Ajibade Multibiz Ventures<br><span style="color:red"><b>Contact:</b> 08119365338</span></p>
 
     <h3 id="todayDate"></h3>
 
     <!-- Editable Prices -->
-    <input type="number" id="sellingPrice" placeholder="Selling Price per KG (₦)" oninput="updateSellingPrice()">
-    <input type="number" id="costPrice" placeholder="Cost Price per KG (₦)" oninput="updateCostPrice()">
+    <label for="sellingPrice">Selling Price per KG (₦)</label>
+    <input type="number" id="sellingPrice" min="0" placeholder="Selling Price per KG (₦)" oninput="updateSellingPrice()">
+
+    <label for="costPrice">Cost Price per KG (₦)</label>
+    <input type="number" id="costPrice" min="0" placeholder="Cost Price per KG (₦)" oninput="updateCostPrice()">
 
     <!-- Mode Switch -->
+    <label for="inputMode">Input Mode</label>
     <select id="inputMode" onchange="switchInputMode()">
         <option value="money">Amount (₦)</option>
         <option value="kg">KG</option>
     </select>
 
     <!-- Single Input -->
-    <input type="number" id="singleInput" placeholder="Enter Amount (₦)" oninput="calculateValue()">
+    <input type="number" id="singleInput" min="0" placeholder="Enter Amount (₦)" oninput="calculateValue()">
     <p id="calculatedResult" style="font-weight:bold;"></p>
 
     <div>
-        <button class="primary" onclick="sellGas()">Sell</button>
+        <button class="primary button-sell" onclick="sellGas()">Sell</button>
         <button class="warning" onclick="undoLastSale()">Undo Last Sale</button>
         <button class="success" onclick="startNewDay()">Start New Day</button>
         <button class="secondary" onclick="viewHistory()">View History</button>
@@ -117,6 +126,7 @@ button {
         <p>Total KG: <span id="totalKg">0</span></p>
         <p>Total Amount: ₦<span id="totalAmount">0</span></p>
         <p>Total Profit: ₦<span id="totalProfit">0</span></p>
+        <p>Total Transactions: <span id="totalTransactions">0</span></p>
     </div>
 </div>
 
@@ -127,15 +137,13 @@ button {
 </div>
 
 <script src="script.js"></script>
-
 <script>
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./sw.js')
-            .then(() => console.log('Service Worker Registered'))
-            .catch(err => console.log('Service Worker Registration Failed:', err));
-    }
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js')
+        .then(() => console.log('Service Worker Registered'))
+        .catch(err => console.log('Service Worker Registration Failed:', err));
+}
 </script>
-
 
 </body>
 </html>
